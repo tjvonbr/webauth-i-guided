@@ -12,6 +12,12 @@ server.use(helmet());
 server.use(express.json());
 server.use(cors());
 
+// Middleware
+const validate = function(req, res, next) {
+  req.bcrypt.compareSync(password, user.password)
+  next();
+};
+
 server.get('/', (req, res) => {
   res.send("It's alive!");
 });
@@ -21,7 +27,7 @@ server.post('/api/register', (req, res) => {
 
   const hash = bcrypt.hashSync(password, 8)
 
-  Users.add(user)
+  Users.add({ username, password: hash })
     .then(saved => {
       res.status(201).json(saved);
     })
@@ -30,13 +36,13 @@ server.post('/api/register', (req, res) => {
     });
 });
 
-server.post('/api/login', (req, res) => {
+server.post('/api/login', validate, (req, res) => {
   let { username, password } = req.body;
 
   Users.findBy({ username })
     .first()
     .then(user => {
-      if (bcrypt.compare(password, hash)) {
+      if (user) {
         res.status(200).json({ message: `Welcome ${user.username}!` });
       } else {
         res.status(401).json({ message: 'Invalid Credentials' });
