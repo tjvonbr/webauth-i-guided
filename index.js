@@ -17,7 +17,9 @@ server.get('/', (req, res) => {
 });
 
 server.post('/api/register', (req, res) => {
-  let user = req.body;
+  let { username, password } = req.body;
+
+  const hash = bcrypt.hashSync(password, 8)
 
   Users.add(user)
     .then(saved => {
@@ -34,7 +36,7 @@ server.post('/api/login', (req, res) => {
   Users.findBy({ username })
     .first()
     .then(user => {
-      if (user) {
+      if (bcrypt.compare(password, hash)) {
         res.status(200).json({ message: `Welcome ${user.username}!` });
       } else {
         res.status(401).json({ message: 'Invalid Credentials' });
